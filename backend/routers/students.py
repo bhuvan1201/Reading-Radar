@@ -74,19 +74,6 @@ def list_books(conn=Depends(pg_conn)):
         return cur.fetchall()
 
 
-@router.get("/books")
-def list_books(conn=Depends(pg_conn)):
-    with conn.cursor() as cur:
-        cur.execute(
-            """
-            SELECT id, title, author, lexile_level, genre, tags, cover_url
-            FROM books
-            ORDER BY lexile_level ASC, title ASC
-            """
-        )
-        return cur.fetchall()
-
-
 @router.get(
     "/{student_id}",
     operation_id="getStudentDetail",
