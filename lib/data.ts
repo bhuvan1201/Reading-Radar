@@ -184,8 +184,7 @@ function normalizeBook(book: Omit<Book, "cover" | "accent"> & Partial<Pick<Book,
 }
 
 function apiUrl(path: string) {
-  const base = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
-  return `${base}${path}`;
+  return path;
 }
 
 async function fetchJson<T>(path: string): Promise<T> {
@@ -216,6 +215,10 @@ export async function loadStudentDetail(id: number): Promise<{ detail: StudentDe
 }
 
 export async function loadBooks(): Promise<Book[]> {
+  try {
+    const books = await fetchJson<Array<Omit<Book, "cover" | "accent">>>("/api/students/books");
+    if (books.length) return books.map(normalizeBook);
+  } catch { /* Fall back to the bundled catalog when the API is unavailable. */ }
   try { return (await getCsvDemo()).books; }
   catch { return demoBooks; }
 }
