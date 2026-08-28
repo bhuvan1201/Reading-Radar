@@ -22,7 +22,20 @@ def ch_client():
         client.close()
 
 
-@router.get("/risk")
+@router.get(
+    "/risk",
+    operation_id="listStudentsByRisk",
+    summary="List all students ranked by reading-trend risk",
+    description=(
+        "Returns every student ranked by their reading-speed trend, most concerning first. "
+        "Use this to answer questions like 'who's falling behind?', 'who needs a check-in?', "
+        "'who hasn't read in a while?' (check each student's last_session date), or 'who is "
+        "improving?'. Each entry includes risk_level (at_risk, watch, or on_track), wpm_slope "
+        "(negative means reading speed is declining over time), avg_wpm, avg_comprehension, "
+        "session_count, and last_session (the most recent date this student logged a reading "
+        "session)."
+    ),
+)
 def list_risk_ranked(limit: int = 50, conn=Depends(pg_conn), ch=Depends(ch_client)):
     ranked = risk.get_risk_ranked_students(ch)[:limit]
     if not ranked:
@@ -48,7 +61,18 @@ def list_risk_ranked(limit: int = 50, conn=Depends(pg_conn), ch=Depends(ch_clien
     ]
 
 
-@router.get("/{student_id}")
+@router.get(
+    "/{student_id}",
+    operation_id="getStudentDetail",
+    summary="Get one student's profile, reading trend, and full session history",
+    description=(
+        "Returns a single student's profile (name, grade, interests, classroom), their "
+        "computed reading trend (same fields as the risk list), and every individual "
+        "reading session on record (date, words-per-minute, comprehension score, minutes "
+        "read, book). Use this when a question is about one named or already-identified "
+        "student specifically."
+    ),
+)
 def get_student_detail(student_id: int, conn=Depends(pg_conn), ch=Depends(ch_client)):
     with conn.cursor() as cur:
         cur.execute(
@@ -70,7 +94,18 @@ def get_student_detail(student_id: int, conn=Depends(pg_conn), ch=Depends(ch_cli
     return {"student": student, "trend": trend, "sessions": sessions}
 
 
-@router.get("/{student_id}/insight")
+@router.get(
+    "/{student_id}/insight",
+    operation_id="getStudentInsight",
+    summary="Get an AI-written teacher note and book recommendation for one student",
+    description=(
+        "Generates a short, plain-language explanation of what's happening with this "
+        "student's reading (translated from the trend data, no jargon) plus one recommended "
+        "next book matched to their interests and level. Use this when a teacher asks what "
+        "to do about a specific student, or wants a book suggestion for them. This calls an "
+        "LLM, so only use it for one student at a time, not in a loop over many students."
+    ),
+)
 def get_student_insight(student_id: int, conn=Depends(pg_conn), ch=Depends(ch_client)):
     with conn.cursor() as cur:
         cur.execute(
