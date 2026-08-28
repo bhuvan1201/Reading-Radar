@@ -5,23 +5,324 @@ import { useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { Icon } from "@/components/Icons";
 import { TrendChart } from "@/components/Charts";
-import { demoBooks, demoStudents, getDemoInsight, loadBooks, loadInsight, loadStudentDetail } from "@/lib/data";
+import {
+  demoBooks,
+  demoStudents,
+  getDemoInsight,
+  loadBooks,
+  loadInsight,
+  loadStudentDetail,
+} from "@/lib/data";
 import type { Insight, StudentDetail } from "@/lib/types";
 
-function formatDate(date: string) { return new Date(`${date}T12:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric" }); }
+function formatDate(date: string) {
+  return new Date(`${date}T12:00:00`).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+  });
+}
 
 export default function StudentPage({ params }: { params: { id: string } }) {
   const { id: idString } = params;
   const id = Number(idString);
-  const fallback = demoStudents.find((student) => student.id === id) ?? demoStudents[0];
-  const [detail, setDetail] = useState<StudentDetail>(() => ({ student: fallback, trend: fallback, sessions: [] }));
-  const [insight, setInsight] = useState<Insight>(() => getDemoInsight(fallback));
+  const fallback =
+    demoStudents.find((student) => student.id === id) ?? demoStudents[0];
+  const [detail, setDetail] = useState<StudentDetail>(() => ({
+    student: fallback,
+    trend: fallback,
+    sessions: [],
+  }));
+  const [insight, setInsight] = useState<Insight>(() =>
+    getDemoInsight(fallback),
+  );
   const [assigned, setAssigned] = useState(false);
   const [books, setBooks] = useState(demoBooks);
   const [demo, setDemo] = useState(true);
-  useEffect(() => { Promise.all([loadBooks(), loadStudentDetail(id)]).then(([catalog, result]) => { setBooks(catalog); setDetail(result.detail); setDemo(result.demo); const student = result.detail.student as typeof fallback; loadInsight(id, student).then((insightResult) => { setInsight(insightResult.insight); setDemo((value) => value || insightResult.demo); }); }); }, [id]);
+  useEffect(() => {
+    Promise.all([loadBooks(), loadStudentDetail(id)]).then(
+      ([catalog, result]) => {
+        setBooks(catalog);
+        setDetail(result.detail);
+        setDemo(result.demo);
+        const student = result.detail.student as typeof fallback;
+        loadInsight(id, student).then((insightResult) => {
+          setInsight(insightResult.insight);
+          setDemo((value) => value || insightResult.demo);
+        });
+      },
+    );
+  }, [id]);
   const { student, trend, sessions } = detail;
   const recommended = insight.recommended_book;
-  const recommendedStyle = recommended?.cover_url ? { background: `url(${recommended.cover_url}) center/cover` } : { background: recommended?.cover ?? demoBooks[0].cover };
-  return <AppShell demo={demo}><div className="page-wrap detail-page"><Link href="/" className="back-link">← Back to overview</Link><div className="detail-header"><div className="detail-person"><span className="large-avatar">{student.name.split(" ").map((part) => part[0]).join("")}</span><div><span className="eyebrow">Student report · Grade {student.grade}</span><h1>{student.name}</h1><p>{student.interests.slice(0, 3).join(" · ")} · Level {student.baseline_lexile}</p></div></div><div className="detail-actions"><span className={`status-tag ${trend.risk_level === "at_risk" ? "alert" : trend.risk_level === "watch" ? "watch" : "positive-tag"}`}>{trend.risk_level === "at_risk" ? "Needs a closer look" : trend.risk_level === "watch" ? "Steady" : "Improving"}</span><button className="secondary-button"><Icon name="plus" size={15} /> Add note</button><button className="primary-button" onClick={() => setAssigned(true)}>{assigned ? "Ebook assigned" : "Assign ebook"}</button></div></div><div className="report-grid"><section className="paper-card chart-card"><div className="section-heading"><div><span className="eyebrow">Over the last 90 days</span><h2>Reading trajectory</h2></div><span className="chart-note"><i className="legend-dot green-dot" />Student trend</span></div><div className="chart-stat-row"><div><strong>{Math.round(trend.avg_wpm)}</strong><small>average WPM</small><span className={trend.wpm_slope < 0 ? "negative" : "positive"}>{trend.wpm_slope < 0 ? "↓" : "↑"} {Math.abs(trend.wpm_slope).toFixed(2)} / day</span></div><div><strong>{Math.round(trend.avg_comprehension)}%</strong><small>average comprehension</small><span className={trend.comprehension_slope < 0 ? "negative" : "positive"}>{trend.comprehension_slope < 0 ? "↓" : "↑"} {Math.abs(trend.comprehension_slope).toFixed(2)} / day</span></div><div><strong>{trend.session_count}</strong><small>reading sessions</small><span className="neutral">Since May 30</span></div></div><TrendChart sessions={sessions.length ? sessions : [{ session_date: "2026-06-01", wpm: 85, comprehension_score: 75, minutes_read: 18, book_id: 1 }, { session_date: "2026-07-01", wpm: 83, comprehension_score: 73, minutes_read: 17, book_id: 2 }, { session_date: "2026-08-01", wpm: 78, comprehension_score: 70, minutes_read: 16, book_id: 3 }]} dataKey="wpm" height={240} /><div className="chart-axis-label">Reading speed (words per minute)</div></section><section className="paper-card narrative-card"><div className="section-heading"><div><span className="eyebrow">A thoughtful read</span><h2>What we’re seeing</h2></div><span className="spark-circle"><Icon name="spark" size={15} /></span></div><p>{insight.teacher_blurb}</p><div className="narrative-divider" /><span className="eyebrow">Suggested next step</span><p className="next-step">Consider a short check-in about reading stamina, then offer one approachable ebook that connects with {student.name.split(" ")[0]}’s interests.</p><button className="text-link ask-link" onClick={() => window.dispatchEvent(new CustomEvent("open-radar", { detail: { studentName: student.name, studentId: student.id } }))}>Ask Radar for ideas <Icon name="arrow" size={15} /></button></section></div><div className="report-grid lower-report"><section className="paper-card chart-card"><div className="section-heading"><div><span className="eyebrow">Understanding the text</span><h2>Comprehension over time</h2></div><span className="chart-note"><i className="legend-dot amber-dot" />Comprehension</span></div><TrendChart sessions={sessions.length ? sessions : [{ session_date: "2026-06-01", wpm: 85, comprehension_score: 75, minutes_read: 18, book_id: 1 }, { session_date: "2026-07-01", wpm: 83, comprehension_score: 73, minutes_read: 17, book_id: 2 }, { session_date: "2026-08-01", wpm: 78, comprehension_score: 70, minutes_read: 16, book_id: 3 }]} dataKey="comprehension_score" color="#ba8750" height={205} /><div className="chart-axis-label">Quiz comprehension score</div></section><section className="paper-card recommendation-card"><div className="section-heading"><div><span className="eyebrow">A good next page</span><h2>Try this ebook</h2></div><Icon name="book" size={19} /></div><div className="recommendation-body"><span className="book-cover large-cover" style={recommendedStyle}><span>{(recommended?.cover_url ? "" : recommended?.title ?? demoBooks[0].title).split(" ").slice(0, 3).join(" ")}</span></span><div><span className="book-genre">{recommended?.genre ?? "Adventure"} · {recommended?.lexile_level ?? student.baseline_lexile}L</span><h3>{recommended?.title ?? demoBooks[0].title}</h3><p>by {recommended?.author ?? demoBooks[0].author}</p><small>{insight.recommendation_reason}</small></div></div><button className={`wide-button ${assigned ? "assigned" : ""}`} onClick={() => setAssigned(true)}>{assigned ? "✓ Assigned to " + student.name.split(" ")[0] : "Assign this ebook"}<Icon name="arrow" size={15} /></button></section></div><section className="paper-card timeline-card"><div className="section-heading"><div><span className="eyebrow">Recent activity</span><h2>Reading sessions</h2></div><button className="period-select">All sessions ⌄</button></div><div className="timeline">{(sessions.length ? sessions : []).slice(-5).reverse().map((session) => <div className="timeline-row" key={`${session.session_date}-${session.book_id}`}><span className="timeline-dot" /><span><strong>{formatDate(session.session_date)}</strong><small>Read for {session.minutes_read} minutes</small></span><span><strong>{Math.round(session.wpm)} WPM</strong><small>Reading pace</small></span><span><strong>{Math.round(session.comprehension_score)}%</strong><small>Comprehension</small></span><Link href="/library" className="timeline-book">{books.find((book) => book.id === session.book_id)?.title ?? "Reading session"}</Link></div>)}</div></section></div></AppShell>;
+  const recommendedStyle = recommended?.cover_url
+    ? { background: `url(${recommended.cover_url}) center/cover` }
+    : { background: recommended?.cover ?? demoBooks[0].cover };
+  return (
+    <AppShell demo={demo}>
+      <div className="page-wrap detail-page">
+        <Link href="/" className="back-link">
+          ← Back to overview
+        </Link>
+        <div className="detail-header">
+          <div className="detail-person">
+            <span className="large-avatar">
+              {student.name
+                .split(" ")
+                .map((part) => part[0])
+                .join("")}
+            </span>
+            <div>
+              <span className="eyebrow">
+                Student report · Grade {student.grade}
+              </span>
+              <h1>{student.name}</h1>
+              <p>
+                {student.interests.slice(0, 3).join(" · ")} · Level{" "}
+                {student.baseline_lexile}
+              </p>
+            </div>
+          </div>
+          <div className="detail-actions">
+            <span
+              className={`status-tag ${trend.risk_level === "at_risk" ? "alert" : trend.risk_level === "watch" ? "watch" : "positive-tag"}`}
+            >
+              {trend.risk_level === "at_risk"
+                ? "Needs a closer look"
+                : trend.risk_level === "watch"
+                  ? "Steady"
+                  : "Improving"}
+            </span>
+            <button className="secondary-button">
+              <Icon name="plus" size={15} /> Add note
+            </button>
+            <button
+              className="primary-button"
+              onClick={() => setAssigned(true)}
+            >
+              {assigned ? "Ebook assigned" : "Assign ebook"}
+            </button>
+          </div>
+        </div>
+        <div className="report-grid">
+          <section className="paper-card chart-card">
+            <div className="section-heading">
+              <div>
+                <span className="eyebrow">Over the last 90 days</span>
+                <h2>Reading trajectory</h2>
+              </div>
+              <span className="chart-note">
+                <i className="legend-dot green-dot" />
+                Student trend
+              </span>
+            </div>
+            <div className="chart-stat-row">
+              <div>
+                <strong>{Math.round(trend.avg_wpm)}</strong>
+                <small>average WPM</small>
+                <span className={trend.wpm_slope < 0 ? "negative" : "positive"}>
+                  {trend.wpm_slope < 0 ? "↓" : "↑"}{" "}
+                  {Math.abs(trend.wpm_slope).toFixed(2)} / day
+                </span>
+              </div>
+              <div>
+                <strong>{Math.round(trend.avg_comprehension)}%</strong>
+                <small>average comprehension</small>
+                <span
+                  className={
+                    trend.comprehension_slope < 0 ? "negative" : "positive"
+                  }
+                >
+                  {trend.comprehension_slope < 0 ? "↓" : "↑"}{" "}
+                  {Math.abs(trend.comprehension_slope).toFixed(2)} / day
+                </span>
+              </div>
+              <div>
+                <strong>{trend.session_count}</strong>
+                <small>reading sessions</small>
+                <span className="neutral">Since May 30</span>
+              </div>
+            </div>
+            <TrendChart
+              sessions={
+                sessions.length
+                  ? sessions
+                  : [
+                      {
+                        session_date: "2026-06-01",
+                        wpm: 85,
+                        comprehension_score: 75,
+                        minutes_read: 18,
+                        book_id: 1,
+                      },
+                      {
+                        session_date: "2026-07-01",
+                        wpm: 83,
+                        comprehension_score: 73,
+                        minutes_read: 17,
+                        book_id: 2,
+                      },
+                      {
+                        session_date: "2026-08-01",
+                        wpm: 78,
+                        comprehension_score: 70,
+                        minutes_read: 16,
+                        book_id: 3,
+                      },
+                    ]
+              }
+              dataKey="wpm"
+              height={240}
+            />
+            <div className="chart-axis-label">
+              Reading speed (words per minute)
+            </div>
+          </section>
+          <section className="paper-card narrative-card">
+            <div className="section-heading">
+              <div>
+                <span className="eyebrow">A thoughtful read</span>
+                <h2>What we’re seeing</h2>
+              </div>
+              <span className="spark-circle">
+                <Icon name="spark" size={15} />
+              </span>
+            </div>
+            <p>{insight.teacher_blurb}</p>
+            <div className="narrative-divider" />
+            <span className="eyebrow">Suggested next step</span>
+            <p className="next-step">
+              Consider a short check-in about reading stamina, then offer one
+              approachable ebook that connects with {student.name.split(" ")[0]}
+              ’s interests.
+            </p>
+          </section>
+        </div>
+        <div className="report-grid lower-report">
+          <section className="paper-card chart-card">
+            <div className="section-heading">
+              <div>
+                <span className="eyebrow">Understanding the text</span>
+                <h2>Comprehension over time</h2>
+              </div>
+              <span className="chart-note">
+                <i className="legend-dot amber-dot" />
+                Comprehension
+              </span>
+            </div>
+            <TrendChart
+              sessions={
+                sessions.length
+                  ? sessions
+                  : [
+                      {
+                        session_date: "2026-06-01",
+                        wpm: 85,
+                        comprehension_score: 75,
+                        minutes_read: 18,
+                        book_id: 1,
+                      },
+                      {
+                        session_date: "2026-07-01",
+                        wpm: 83,
+                        comprehension_score: 73,
+                        minutes_read: 17,
+                        book_id: 2,
+                      },
+                      {
+                        session_date: "2026-08-01",
+                        wpm: 78,
+                        comprehension_score: 70,
+                        minutes_read: 16,
+                        book_id: 3,
+                      },
+                    ]
+              }
+              dataKey="comprehension_score"
+              color="#ba8750"
+              height={205}
+            />
+            <div className="chart-axis-label">Quiz comprehension score</div>
+          </section>
+          <section className="paper-card recommendation-card">
+            <div className="section-heading">
+              <div>
+                <span className="eyebrow">A good next page</span>
+                <h2>Try this ebook</h2>
+              </div>
+              <Icon name="book" size={19} />
+            </div>
+            <div className="recommendation-body">
+              <span className="book-cover large-cover" style={recommendedStyle}>
+                <span>
+                  {(recommended?.cover_url
+                    ? ""
+                    : (recommended?.title ?? demoBooks[0].title)
+                  )
+                    .split(" ")
+                    .slice(0, 3)
+                    .join(" ")}
+                </span>
+              </span>
+              <div>
+                <span className="book-genre">
+                  {recommended?.genre ?? "Adventure"} ·{" "}
+                  {recommended?.lexile_level ?? student.baseline_lexile}L
+                </span>
+                <h3>{recommended?.title ?? demoBooks[0].title}</h3>
+                <p>by {recommended?.author ?? demoBooks[0].author}</p>
+                <small>{insight.recommendation_reason}</small>
+              </div>
+            </div>
+            <button
+              className={`wide-button ${assigned ? "assigned" : ""}`}
+              onClick={() => setAssigned(true)}
+            >
+              {assigned
+                ? "✓ Assigned to " + student.name.split(" ")[0]
+                : "Assign this ebook"}
+              <Icon name="arrow" size={15} />
+            </button>
+          </section>
+        </div>
+        <section className="paper-card timeline-card">
+          <div className="section-heading">
+            <div>
+              <span className="eyebrow">Recent activity</span>
+              <h2>Reading sessions</h2>
+            </div>
+            <button className="period-select">All sessions ⌄</button>
+          </div>
+          <div className="timeline">
+            {(sessions.length ? sessions : [])
+              .slice(-5)
+              .reverse()
+              .map((session) => (
+                <div
+                  className="timeline-row"
+                  key={`${session.session_date}-${session.book_id}`}
+                >
+                  <span className="timeline-dot" />
+                  <span>
+                    <strong>{formatDate(session.session_date)}</strong>
+                    <small>Read for {session.minutes_read} minutes</small>
+                  </span>
+                  <span>
+                    <strong>{Math.round(session.wpm)} WPM</strong>
+                    <small>Reading pace</small>
+                  </span>
+                  <span>
+                    <strong>{Math.round(session.comprehension_score)}%</strong>
+                    <small>Comprehension</small>
+                  </span>
+                  <Link href="/library" className="timeline-book">
+                    {books.find((book) => book.id === session.book_id)?.title ??
+                      "Reading session"}
+                  </Link>
+                </div>
+              ))}
+          </div>
+        </section>
+      </div>
+    </AppShell>
+  );
 }

@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Icon } from "./Icons";
-import { RadarChat } from "./RadarChat";
 
 const nav = [
   { href: "/", label: "Overview", icon: "grid" },
@@ -100,7 +99,6 @@ export function AppShell({
         </header>
         {children}
       </main>
-      <RadarChat />
     </div>
   );
 }
