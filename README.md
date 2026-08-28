@@ -87,13 +87,3 @@ backend/                     FastAPI app
   services/ai.py                Claude call -> {teacher_blurb, book rec}
   routers/students.py           HTTP endpoints
 ```
-
-## Still needed (day-of)
-
-- [ ] Frontend: ranked list view + student detail (sparkline + AI blurb + book
-      cover/rec). Next.js + Tailwind + Recharts is the fast path.
-- [ ] Point `.env` at ClickHouse Cloud instead of local Docker before the
-      demo (ask the partner engineers at the expert bar for a fast setup).
-- [ ] Stretch: LibreChat tool/plugin wrapping `/api/students/risk` and
-      `/api/students/{id}/insight` for the bonus category — "ask about my
-      class" in chat.
