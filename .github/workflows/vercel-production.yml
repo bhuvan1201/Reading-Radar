@@ -1,0 +1,39 @@
+name: Deploy frontend to Vercel
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: vercel-production
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Link Vercel project
+        run: vercel link --yes --project prj_5KjxdxSBg01WK1brkoNXUGATnlQB --token "$VERCEL_TOKEN"
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+
+      - name: Deploy production frontend
+        run: >-
+          vercel deploy --prod --yes --force
+          --token "$VERCEL_TOKEN"
+          --build-env NEXT_PUBLIC_API_URL=https://reading-radar-api-production.up.railway.app
+          --env NEXT_PUBLIC_API_URL=https://reading-radar-api-production.up.railway.app
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
