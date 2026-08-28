@@ -4,8 +4,12 @@ import os
 import anthropic
 
 MODEL = os.environ.get("ANTHROPIC_MODEL", "claude-opus-5")
+# Only needed for multi-workspace personal API keys, which must declare which
+# workspace each request acts in. Single-workspace keys don't need this.
+WORKSPACE_ID = os.environ.get("ANTHROPIC_WORKSPACE_ID")
 
 _client = anthropic.Anthropic()
+_extra_headers = {"anthropic-workspace-id": WORKSPACE_ID} if WORKSPACE_ID else {}
 
 INSIGHT_SCHEMA = {
     "type": "object",
@@ -59,6 +63,7 @@ from the candidates based on their interests and current level."""
         max_tokens=1024,
         messages=[{"role": "user", "content": prompt}],
         output_config={"format": {"type": "json_schema", "schema": schema}},
+        extra_headers=_extra_headers,
     )
     text = next(b.text for b in response.content if b.type == "text")
     return json.loads(text)

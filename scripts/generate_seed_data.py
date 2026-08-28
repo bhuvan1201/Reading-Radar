@@ -37,32 +37,46 @@ TAG_POOL = [
     "superheroes", "ocean", "history",
 ]
 
-# (title, author, lexile_level, genre, tags)
+def _cover(cover_i):
+    return f"https://covers.openlibrary.org/b/id/{cover_i}-L.jpg" if cover_i else None
+
+
+# Real, recognizable children's/middle-grade books spanning early-reader to
+# middle-grade level. lexile_level is an approximate grade-band figure
+# (commonly cited public ranges) — good enough to bucket books for a
+# recommendation demo, not a precise/licensed Lexile measure.
+# cover_i values were resolved once via the Open Library search API and are
+# hardcoded here so seeding has zero runtime network dependency (Open
+# Library rate-limits/resets anonymous live lookups; a hackathon demo
+# shouldn't depend on that at seed time). A handful had no cover on Open
+# Library — cover_url falls back to None for those, which the UI should
+# render as a placeholder.
+# (title, author, lexile_level, genre, tags, cover_i)
 BOOKS = [
-    ("Max and the Missing Sneaker", "Dana Wills", 320, "Mystery", ["mystery", "humor"]),
-    ("The Dragon Who Couldn't Fly", "R. K. Osei", 410, "Fantasy", ["fantasy", "animals"]),
-    ("Ellie's Ocean Adventure", "Marisol Vega", 380, "Adventure", ["ocean", "adventure"]),
-    ("The Mystery of Room 6", "Tomas Bright", 450, "Mystery", ["mystery", "friendship"]),
-    ("Star Explorers: First Flight", "J. Alden Cho", 520, "Science", ["space", "science"]),
-    ("Dinosaur Detectives", "Priya Nandan", 300, "Mystery", ["dinosaurs", "mystery"]),
-    ("The Funny Farm Chronicles", "Big Sal Ortiz", 250, "Humor", ["humor", "animals"]),
-    ("Magic in the Maple Tree", "Wren Castellan", 470, "Fantasy", ["magic", "fantasy"]),
-    ("Super Zero", "Andre Lin", 340, "Superhero", ["superheroes", "humor"]),
-    ("Under the Big Top", "Colette Marsh", 400, "Realistic Fiction", ["friendship", "humor"]),
-    ("The Last Snow Day", "Halle Byun", 550, "Realistic Fiction", ["friendship", "adventure"]),
-    ("Cave of Whispers", "Otis Faraday", 610, "Adventure", ["adventure", "mystery"]),
-    ("Robot Recess", "Nia Fontaine", 360, "Science", ["science", "humor"]),
-    ("The Great Backyard Race", "Deshawn Price", 280, "Sports", ["sports", "humor"]),
-    ("Whiskers and the Lost Treasure", "Ingrid Solheim", 330, "Adventure", ["animals", "adventure"]),
-    ("Journey to Cloud Island", "Mateo Reyes-Lin", 480, "Fantasy", ["fantasy", "adventure"]),
-    ("The Invisible Friend", "Sasha Duong", 500, "Realistic Fiction", ["friendship", "magic"]),
-    ("Soccer Star Sam", "Kwame Osei", 260, "Sports", ["sports", "friendship"]),
-    ("The Time-Traveling Backpack", "Renee Kowalski", 580, "Science", ["science", "adventure"]),
-    ("Luna and the Night Garden", "Ines Trabelsi", 420, "Fantasy", ["magic", "animals"]),
-    ("Bug Club Investigators", "Owen Petrakis", 290, "Mystery", ["mystery", "science"]),
-    ("The Kindness Project", "Alba Moreno", 440, "Realistic Fiction", ["friendship", "history"]),
-    ("Castle of Small Wonders", "Theo Winslow", 630, "Fantasy", ["magic", "fantasy"]),
-    ("Ocean Deep Mystery", "Farrah Delgado", 560, "Mystery", ["ocean", "mystery"]),
+    ("Frog and Toad Are Friends", "Arnold Lobel", 180, "Easy Reader", ["friendship", "animals", "humor"], 11303047),
+    ("Amelia Bedelia", "Peggy Parish", 250, "Humor", ["humor", "friendship"], 33823),
+    ("National Geographic Readers: Sharks", "Anne Schreiber", 430, "Nonfiction", ["ocean", "science", "animals"], 8758085),
+    ("Magic Tree House: Dinosaurs Before Dark", "Mary Pope Osborne", 320, "Adventure", ["adventure", "dinosaurs", "magic"], None),
+    ("Ivy and Bean", "Annie Barrows", 420, "Realistic Fiction", ["friendship", "humor"], 14859230),
+    ("Junie B. Jones and the Stupid Smelly Bus", "Barbara Park", 470, "Humor", ["humor", "friendship"], None),
+    ("Judy Moody Was in a Mood", "Megan McDonald", 530, "Humor", ["humor", "friendship"], 6670043),
+    ("Dog Man", "Dav Pilkey", 390, "Graphic Novel", ["graphic novels", "humor", "superheroes"], 7894142),
+    ("The Boxcar Children", "Gertrude Chandler Warner", 590, "Mystery", ["mystery", "adventure", "friendship"], 11349395),
+    ("Because of Winn-Dixie", "Kate DiCamillo", 610, "Realistic Fiction", ["friendship", "animals"], 2241356),
+    ("The One and Only Ivan", "Katherine Applegate", 570, "Realistic Fiction", ["animals", "friendship"], 12656488),
+    ("Holes", "Louis Sachar", 660, "Mystery", ["mystery", "adventure", "history"], 19797),
+    ("Where the Red Fern Grows", "Wilson Rawls", 700, "Realistic Fiction", ["animals", "adventure"], 7996608),
+    ("The Miraculous Journey of Edward Tulane", "Kate DiCamillo", 700, "Fantasy", ["magic", "friendship"], 3326249),
+    ("Charlotte's Web", "E.B. White", 680, "Fantasy", ["animals", "friendship", "magic"], 8461797),
+    ("The Crossover", "Kwame Alexander", 750, "Realistic Fiction", ["sports", "friendship"], 7336870),
+    ("The Cricket in Times Square", "George Selden", 780, "Fantasy", ["animals", "friendship", "humor"], None),
+    ("A Wrinkle in Time", "Madeleine L'Engle", 740, "Science Fiction", ["space", "science", "fantasy"], 8709146),
+    ("Percy Jackson and the Lightning Thief", "Rick Riordan", 740, "Fantasy", ["fantasy", "adventure", "superheroes"], None),
+    ("The BFG", "Roald Dahl", 720, "Fantasy", ["fantasy", "magic", "humor"], 9176033),
+    ("Frindle", "Andrew Clements", 830, "Realistic Fiction", ["humor", "friendship", "science"], None),
+    ("Matilda", "Roald Dahl", 840, "Fantasy", ["fantasy", "magic", "humor"], 12889769),
+    ("James and the Giant Peach", "Roald Dahl", 870, "Fantasy", ["fantasy", "adventure", "magic"], 8252454),
+    ("Wonder", "R.J. Palacio", 790, "Realistic Fiction", ["friendship", "history"], 8223160),
 ]
 
 GRADE_BASELINE_WPM = {3: 70, 4: 90, 5: 110}
@@ -108,10 +122,10 @@ def seed_postgres(conn, n_students):
         classroom_ids.append((cur.fetchone()[0], grade))
 
     book_ids = []
-    for title, author, lexile, genre, tags in BOOKS:
+    for title, author, lexile, genre, tags, cover_i in BOOKS:
         cur.execute(
-            "INSERT INTO books (title, author, lexile_level, genre, tags) VALUES (%s, %s, %s, %s, %s) RETURNING id",
-            (title, author, lexile, genre, tags),
+            "INSERT INTO books (title, author, lexile_level, genre, tags, cover_url) VALUES (%s, %s, %s, %s, %s, %s) RETURNING id",
+            (title, author, lexile, genre, tags, _cover(cover_i)),
         )
         book_ids.append((cur.fetchone()[0], lexile, tags))
 

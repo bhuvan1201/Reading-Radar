@@ -93,7 +93,7 @@ def get_student_insight(student_id: int, conn=Depends(pg_conn), ch=Depends(ch_cl
     with conn.cursor() as cur:
         cur.execute(
             """
-            SELECT id, title, author, lexile_level, genre, tags
+            SELECT id, title, author, lexile_level, genre, tags, cover_url
             FROM books
             WHERE lexile_level BETWEEN %s AND %s
             ORDER BY (tags && %s) DESC, ABS(lexile_level - %s) ASC
@@ -108,7 +108,11 @@ def get_student_insight(student_id: int, conn=Depends(pg_conn), ch=Depends(ch_cl
         )
         candidate_books = cur.fetchall()
 
-    insight = ai.generate_teacher_insight(student, trend, candidate_books)
+    # cover_url is irrelevant to the model's book choice and just adds noise/tokens
+    books_for_prompt = [
+        {k: v for k, v in b.items() if k != "cover_url"} for b in candidate_books
+    ]
+    insight = ai.generate_teacher_insight(student, trend, books_for_prompt)
     recommended = next(
         (b for b in candidate_books if b["id"] == insight["recommended_book_id"]), None
     )

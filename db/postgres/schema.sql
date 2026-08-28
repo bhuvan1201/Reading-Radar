@@ -33,7 +33,8 @@ CREATE TABLE IF NOT EXISTS books (
     author TEXT NOT NULL,
     lexile_level INTEGER NOT NULL,
     genre TEXT NOT NULL,
-    tags TEXT[] NOT NULL DEFAULT '{}'
+    tags TEXT[] NOT NULL DEFAULT '{}',
+    cover_url TEXT
 );
 
 CREATE TABLE IF NOT EXISTS assignments (
