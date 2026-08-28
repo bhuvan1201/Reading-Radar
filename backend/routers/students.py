@@ -48,6 +48,19 @@ def list_risk_ranked(limit: int = 50, conn=Depends(pg_conn), ch=Depends(ch_clien
     ]
 
 
+@router.get("/books")
+def list_books(conn=Depends(pg_conn)):
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT id, title, author, lexile_level, genre, tags, cover_url
+            FROM books
+            ORDER BY lexile_level ASC, title ASC
+            """
+        )
+        return cur.fetchall()
+
+
 @router.get("/{student_id}")
 def get_student_detail(student_id: int, conn=Depends(pg_conn), ch=Depends(ch_client)):
     with conn.cursor() as cur:

@@ -19,7 +19,7 @@ export default function StudentPage({ params }: { params: { id: string } }) {
   const [assigned, setAssigned] = useState(false);
   const [books, setBooks] = useState(demoBooks);
   const [demo, setDemo] = useState(true);
-  useEffect(() => { loadBooks().then(setBooks); loadStudentDetail(id).then((result) => { setDetail(result.detail); setDemo(result.demo); const student = result.detail.student as typeof fallback; loadInsight(id, student).then((insightResult) => { setInsight(insightResult.insight); setDemo((value) => value || insightResult.demo); }); }); }, [id]);
+  useEffect(() => { Promise.all([loadBooks(), loadStudentDetail(id)]).then(([catalog, result]) => { setBooks(catalog); setDetail(result.detail); setDemo(result.demo); const student = result.detail.student as typeof fallback; loadInsight(id, student).then((insightResult) => { setInsight(insightResult.insight); setDemo((value) => value || insightResult.demo); }); }); }, [id]);
   const { student, trend, sessions } = detail;
   const recommended = insight.recommended_book;
   const recommendedStyle = recommended?.cover_url ? { background: `url(${recommended.cover_url}) center/cover` } : { background: recommended?.cover ?? demoBooks[0].cover };
