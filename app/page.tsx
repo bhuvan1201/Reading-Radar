@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { type FormEvent, useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { Icon } from "@/components/Icons";
 import { TrendChart } from "@/components/Charts";
@@ -37,6 +37,13 @@ export default function Dashboard() {
   const [pulse, setPulse] = useState<ReadingSession[]>([]);
   const [showLogForm, setShowLogForm] = useState(false);
   const [logged, setLogged] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
+  const [selectedStudentId, setSelectedStudentId] = useState("");
+  const [selectedBookId, setSelectedBookId] = useState("");
+  const [minutesRead, setMinutesRead] = useState("20");
+  const [wpm, setWpm] = useState("90");
+  const [comprehension, setComprehension] = useState("80");
   useEffect(() => {
     loadStudents().then((result) => {
       setStudents(result.students);
@@ -53,6 +60,12 @@ export default function Dashboard() {
     classroom === "All classrooms"
       ? students
       : students.filter((student) => student.classroom_name === classroom);
+  async function refreshDashboard() {
+    const result = await loadStudents();
+    setStudents(result.students);
+    setDemo(result.demo);
+    loadClassPulse(result.students).then(setPulse);
+  }
   const atRisk = visibleStudents.filter(
     (student) => student.risk_level === "at_risk",
   );
@@ -84,6 +97,9 @@ export default function Dashboard() {
               onClick={() => {
                 setShowLogForm(true);
                 setLogged(false);
+                setSaveError("");
+                setSelectedStudentId(String(visibleStudents[0]?.id ?? ""));
+                setSelectedBookId(String(books[0]?.id ?? ""));
               }}
             >
               <Icon name="plus" size={16} /> Log a reading session
@@ -115,7 +131,7 @@ export default function Dashboard() {
               {logged ? (
                 <>
                   <p className="modal-success">
-                    Reading session saved for this demo classroom.
+                    Reading session saved to the class record.
                   </p>
                   <button
                     className="primary-button"
@@ -126,32 +142,104 @@ export default function Dashboard() {
                 </>
               ) : (
                 <form
-                  onSubmit={(event) => {
+                  onSubmit={async (event: FormEvent<HTMLFormElement>) => {
                     event.preventDefault();
-                    setLogged(true);
+                    setSaving(true);
+                    setSaveError("");
+                    try {
+                      const response = await fetch("/api/students/sessions", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          student_id: Number(selectedStudentId),
+                          book_id: Number(selectedBookId),
+                          minutes_read: Number(minutesRead),
+                          wpm: Number(wpm),
+                          comprehension_score: Number(comprehension),
+                        }),
+                      });
+                      if (!response.ok) {
+                        const body = await response.json().catch(() => null);
+                        throw new Error(body?.detail ?? "The session could not be saved.");
+                      }
+                      setLogged(true);
+                      await refreshDashboard();
+                    } catch (error) {
+                      setSaveError(
+                        error instanceof Error
+                          ? error.message
+                          : "The session could not be saved. Try again.",
+                      );
+                    } finally {
+                      setSaving(false);
+                    }
                   }}
                 >
                   <label>
                     Student
-                    <select required defaultValue="">
+                    <select
+                      required
+                      value={selectedStudentId}
+                      onChange={(event) => setSelectedStudentId(event.target.value)}
+                    >
                       <option value="" disabled>
                         Choose a student
                       </option>
                       {visibleStudents.map((student) => (
-                        <option key={student.id}>{student.name}</option>
+                        <option key={student.id} value={student.id}>
+                          {student.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    Ebook
+                    <select
+                      required
+                      value={selectedBookId}
+                      onChange={(event) => setSelectedBookId(event.target.value)}
+                    >
+                      {books.map((book) => (
+                        <option key={book.id} value={book.id}>
+                          {book.title}
+                        </option>
                       ))}
                     </select>
                   </label>
                   <label>
                     Minutes read
-                    <input type="number" min="1" defaultValue="20" required />
+                    <input
+                      type="number"
+                      min="1"
+                      value={minutesRead}
+                      onChange={(event) => setMinutesRead(event.target.value)}
+                      required
+                    />
                   </label>
                   <label>
                     Words per minute
-                    <input type="number" min="1" defaultValue="90" required />
+                    <input
+                      type="number"
+                      min="1"
+                      value={wpm}
+                      onChange={(event) => setWpm(event.target.value)}
+                      required
+                    />
                   </label>
-                  <button className="primary-button" type="submit">
-                    Save session
+                  <label>
+                    Comprehension score
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={comprehension}
+                      onChange={(event) => setComprehension(event.target.value)}
+                      required
+                    />
+                  </label>
+                  {saveError && <p className="modal-error">{saveError}</p>}
+                  <button className="primary-button" type="submit" disabled={saving}>
+                    {saving ? "Saving..." : "Save session"}
                   </button>
                 </form>
               )}

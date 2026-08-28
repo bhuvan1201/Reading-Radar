@@ -1534,6 +1534,12 @@ body {
   line-height: 1.5;
   margin: 0 0 18px;
 }
+.modal-error {
+  color: #a94432;
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 0;
+}
 .catalog-cover em {
   font-size: 10px;
 }

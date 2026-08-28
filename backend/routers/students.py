@@ -1,9 +1,21 @@
+from datetime import date
+
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, Field
 
 from ..db import get_ch_client, get_pg_conn
 from ..services import ai, risk
 
 router = APIRouter(prefix="/api/students", tags=["students"])
+
+
+class ReadingSessionCreate(BaseModel):
+    student_id: int = Field(gt=0)
+    book_id: int = Field(gt=0)
+    minutes_read: int = Field(gt=0, le=1440)
+    wpm: float = Field(gt=0, le=2000)
+    comprehension_score: float = Field(ge=0, le=100)
+    session_date: date | None = None
 
 
 def pg_conn():
@@ -72,6 +84,56 @@ def list_books(conn=Depends(pg_conn)):
             """
         )
         return cur.fetchall()
+
+
+@router.post("/sessions", status_code=201)
+def create_reading_session(
+    payload: ReadingSessionCreate,
+    conn=Depends(pg_conn),
+    ch=Depends(ch_client),
+):
+    """Record one reading event in ClickHouse after validating its entities."""
+    with conn.cursor() as cur:
+        cur.execute("SELECT id FROM students WHERE id = %s", (payload.student_id,))
+        if not cur.fetchone():
+            raise HTTPException(status_code=404, detail="Student not found")
+
+        cur.execute("SELECT id FROM books WHERE id = %s", (payload.book_id,))
+        if not cur.fetchone():
+            raise HTTPException(status_code=404, detail="Ebook not found")
+
+    recorded_date = payload.session_date or date.today()
+    ch.insert(
+        "reading_sessions",
+        [[
+            payload.student_id,
+            payload.book_id,
+            recorded_date,
+            payload.minutes_read,
+            round(payload.minutes_read * payload.wpm),
+            payload.wpm,
+            0,
+            0,
+            payload.comprehension_score,
+        ]],
+        column_names=[
+            "student_id",
+            "book_id",
+            "session_date",
+            "minutes_read",
+            "words_read",
+            "wpm",
+            "quiz_correct",
+            "quiz_total",
+            "comprehension_score",
+        ],
+    )
+    return {
+        "status": "saved",
+        "student_id": payload.student_id,
+        "book_id": payload.book_id,
+        "session_date": recorded_date.isoformat(),
+    }
 
 
 @router.get(
