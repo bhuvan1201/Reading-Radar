@@ -1,0 +1,17 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import { AppShell } from "@/components/AppShell";
+import { Icon } from "@/components/Icons";
+import { demoBooks, demoStudents, loadBooks } from "@/lib/data";
+
+export default function LibraryPage() {
+  const [query, setQuery] = useState("");
+  const [genre, setGenre] = useState("All genres");
+  const [assigned, setAssigned] = useState<number[]>([]);
+  const [books, setBooks] = useState(demoBooks);
+  useEffect(() => { loadBooks().then(setBooks); }, []);
+  const genres = ["All genres", ...Array.from(new Set(books.map((book) => book.genre)))];
+  const filteredBooks = useMemo(() => books.filter((book) => (genre === "All genres" || book.genre === genre) && `${book.title} ${book.author}`.toLowerCase().includes(query.toLowerCase())), [books, genre, query]);
+  return <AppShell><div className="page-wrap library-page"><div className="page-heading"><div><span className="eyebrow">Cedar Grove collection</span><h1>Ebook library</h1><p>Find the next story that helps a reader keep going.</p></div><button className="primary-button"><Icon name="plus" size={16} /> Add an ebook</button></div><div className="library-toolbar"><label className="search-field"><Icon name="search" size={17} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search titles or authors" /></label><select value={genre} onChange={(event) => setGenre(event.target.value)} aria-label="Filter by genre">{genres.map((item) => <option key={item}>{item}</option>)}</select><button className="filter-button">Level <span>All</span>⌄</button><span className="result-count">{filteredBooks.length} titles</span></div><div className="library-feature"><div><span className="eyebrow">Made for a good fit</span><h2>Recommendations feel better<br />when they feel personal.</h2><p>Browse by interest, level, and the kind of story a student might actually want to finish.</p></div><div className="feature-books">{books.slice(1, 4).map((book) => <span key={book.id} className="book-cover feature-cover" style={{ background: book.cover }}><span>{book.title.split(" ").slice(0, 3).join(" ")}</span></span>)}</div></div><div className="library-heading"><div><span className="eyebrow">All ebooks</span><h2>On the shelf</h2></div><span className="library-tip">Showing titles for {demoStudents.length} students</span></div><div className="book-grid">{filteredBooks.map((book) => <article className="library-book" key={book.id}><span className="book-cover catalog-cover" style={{ background: book.cover_url ? `url(${book.cover_url}) center/cover` : book.cover }}><span>{book.cover_url ? "" : book.title.split(" ").slice(0, 4).join(" ")}</span><em>{book.genre}</em></span><div className="book-details"><div><span className="book-genre">{book.genre} · {book.lexile_level}L</span><h3>{book.title}</h3><p>{book.author}</p></div><span className="tag-row">{book.tags.slice(0, 2).map((tag) => <span key={tag}>{tag}</span>)}</span><button className={`wide-button ${assigned.includes(book.id) ? "assigned" : ""}`} onClick={() => setAssigned((current) => current.includes(book.id) ? current : [...current, book.id])}>{assigned.includes(book.id) ? "✓ Added to assignments" : "Assign ebook"}<Icon name="arrow" size={14} /></button></div></article>)}</div>{filteredBooks.length === 0 && <div className="empty-state"><Icon name="book" size={28} /><h3>No books found</h3><p>Try a different title, author, or genre.</p></div>}</div></AppShell>;
+}
