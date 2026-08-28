@@ -8,6 +8,12 @@ Built for the ClickHouse hackathon (reading-crisis track): **Postgres** holds
 entities (students, books, classrooms), **ClickHouse** holds the reading
 session event stream and does the trend math.
 
+## Production
+
+- Frontend: https://reading-radar.vercel.app
+- Backend API: https://reading-radar-api-production.up.railway.app
+- Health check: https://reading-radar-api-production.up.railway.app/api/health
+
 ## Architecture
 
 ```
