@@ -202,7 +202,7 @@ export default function Dashboard() {
                 <span className="eyebrow">Priority today</span>
                 <h2>Needs a closer look</h2>
               </div>
-              <Link href="/students/1" className="text-link">
+              <Link href="/students" className="text-link">
                 View all <Icon name="arrow" size={15} />
               </Link>
             </div>
@@ -275,7 +275,7 @@ export default function Dashboard() {
                 <span className="eyebrow">A little momentum</span>
                 <h2>Students moving forward</h2>
               </div>
-              <Link href="/students/4" className="text-link">
+              <Link href="/students" className="text-link">
                 See students <Icon name="arrow" size={15} />
               </Link>
             </div>

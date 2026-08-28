@@ -1739,3 +1739,195 @@ body {
 .book-genre {
   color: #777169;
 }
+.students-page .page-heading {
+  align-items: center;
+}
+.roster-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 13px;
+  margin-bottom: 18px;
+}
+.roster-summary > div {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  background: #f7f7f1;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 15px 18px;
+}
+.roster-summary strong {
+  color: #31483e;
+  font:
+    400 24px "Libre Baskerville",
+    serif;
+}
+.roster-summary span {
+  color: #8d948a;
+  font-size: 11px;
+}
+.roster-card {
+  padding: 0;
+  overflow: hidden;
+}
+.roster-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 18px 20px;
+  border-bottom: 1px solid #eeece5;
+}
+.roster-search {
+  width: 260px;
+}
+.roster-toolbar select {
+  height: 35px;
+  border: 1px solid #e3e0d7;
+  border-radius: 7px;
+  background: #fffdf9;
+  color: #68756b;
+  padding: 0 10px;
+  font-size: 12px;
+}
+.roster-row {
+  display: grid;
+  grid-template-columns: minmax(210px, 1.6fr) minmax(
+      145px,
+      1.1fr
+    ) 125px 125px 105px 24px;
+  gap: 15px;
+  align-items: center;
+  padding: 14px 20px;
+  border-bottom: 1px solid #f0eee8;
+  color: var(--ink);
+  transition: background 0.2s ease;
+}
+.roster-row:not(.roster-header):hover {
+  background: #fbfaf5;
+}
+.roster-header {
+  color: #9a9f96;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.roster-student {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 0;
+}
+.roster-student > span:last-child {
+  min-width: 0;
+}
+.roster-student strong,
+.roster-student small,
+.roster-metric strong,
+.roster-metric small {
+  display: block;
+}
+.roster-student strong {
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.roster-student small,
+.roster-metric small {
+  color: #979d94;
+  font-size: 10px;
+  margin-top: 4px;
+}
+.roster-metric strong {
+  font-size: 12px;
+  font-weight: 600;
+}
+.roster-metric small {
+  font-size: 9px;
+}
+.roster-date {
+  color: #737d73;
+  font-size: 11px;
+}
+.roster-arrow {
+  color: #98a096;
+  text-align: right;
+}
+.roster-state {
+  display: grid;
+  justify-items: center;
+  text-align: center;
+  gap: 5px;
+  color: #899287;
+  padding: 70px 20px;
+}
+.roster-state h2 {
+  color: #405449;
+  font:
+    400 19px "Libre Baskerville",
+    serif;
+  margin: 7px 0 0;
+}
+.roster-state p {
+  margin: 0 0 8px;
+  font-size: 11px;
+}
+@media (max-width: 900px) {
+  .roster-row {
+    grid-template-columns: minmax(190px, 1.5fr) 145px 110px 110px 90px 20px;
+    gap: 9px;
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+  .roster-toolbar {
+    flex-wrap: wrap;
+  }
+  .roster-search {
+    width: 100%;
+  }
+  .roster-toolbar .result-count {
+    margin-left: auto;
+  }
+}
+@media (max-width: 700px) {
+  .students-page .page-heading .secondary-button {
+    margin-top: 20px;
+  }
+  .roster-summary {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .roster-summary > div {
+    padding: 12px 15px;
+  }
+  .roster-header {
+    display: none;
+  }
+  .roster-row {
+    grid-template-columns: 1fr auto;
+    gap: 10px;
+    padding: 16px;
+  }
+  .roster-row > :nth-child(2) {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .roster-row > :nth-child(3),
+  .roster-row > :nth-child(4),
+  .roster-row > :nth-child(5) {
+    grid-column: 1;
+  }
+  .roster-row > :nth-child(3),
+  .roster-row > :nth-child(4) {
+    display: inline-block;
+    margin-right: 15px;
+  }
+  .roster-row > :nth-child(6) {
+    grid-column: 2;
+    grid-row: 3;
+  }
+  .roster-date {
+    font-size: 10px;
+  }
+}
